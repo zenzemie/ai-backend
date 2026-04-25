@@ -36,7 +36,7 @@ export class RoutingService {
   }
 
   getPerformanceData() {
-    return this.bandit.stats;
+    return this.bandit.getStats();
   }
 
   addStrategy(strategy: any) {

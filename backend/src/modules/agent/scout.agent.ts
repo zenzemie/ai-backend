@@ -16,18 +16,22 @@ export class ScoutAgent extends BaseAgent {
   }
 
   async processTask(rawData: any) {
-    this.logger.log(`Scout ${this.id} processing raw data...`);
-    
-    const contextString = `${rawData.name} ${rawData.industry} ${rawData.title || ''} ${rawData.companyDesc || ''}`;
-    const embedding = await this.getEmbedding(contextString);
+    return this.tracer.startActiveSpan('agent.scout.process', async (span) => {
+        this.logger.log(`Scout ${this.id} processing raw data...`);
+        this.logThought(span, 'Ingesting raw lead data and generating embeddings.');
 
-    const event = {
-      ...rawData,
-      context_vector: embedding,
-      source: 'scout-ingestion'
-    };
+        const contextString = `${rawData.name} ${rawData.industry} ${rawData.title || ''} ${rawData.companyDesc || ''}`;
+        const embedding = await this.getEmbedding(contextString);
 
-    return event;
+        const event = {
+            ...rawData,
+            context_vector: embedding,
+            source: 'scout-ingestion'
+        };
+
+        span.setAttribute('agent.output.source', event.source);
+        return event;
+    });
   }
 
   private async getEmbedding(text: string) {

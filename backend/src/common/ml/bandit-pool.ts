@@ -63,6 +63,13 @@ export class ThompsonSampling {
         }
     }
 
+    addArm(arm: string) {
+        if (!this.stats[arm]) {
+            this.arms.push(arm);
+            this.stats[arm] = { alpha: 1, beta: 1 };
+        }
+    }
+
     getStats() {
         return this.stats;
     }
