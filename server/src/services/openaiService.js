@@ -4,7 +4,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const generateOutreach = async (lead, tone) => {
+const generateOutreach = async (lead, tone, serviceFocus) => {
   const { name, website, industry, notes } = lead;
 
   const systemPrompt = `You are a professional marketing assistant. Your goal is to generate a personalized outreach email for a business.
@@ -24,6 +24,7 @@ const generateOutreach = async (lead, tone) => {
   - Subject line should be catchy but professional.
   - Body should be personalized based on the business name, industry, and any notes provided.
   - Tone should be ${tone} (options: friendly, persuasive, formal).
+  ${serviceFocus ? `- Focus specifically on promoting: ${serviceFocus}` : ''}
   - Avoid spammy language. Focus on solving specific pain points (e.g., missing WhatsApp booking, outdated website).
   - High quality and concise.
   - Response must be a JSON object with 'subject' and 'body' fields.`;

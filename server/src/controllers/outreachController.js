@@ -3,7 +3,7 @@ const { sendEmail } = require('../services/resendService');
 const supabase = require('../config/supabase');
 
 const generateMessage = async (req, res) => {
-  const { leadId, tone } = req.body;
+  const { leadId, tone, serviceFocus } = req.body;
 
   if (!leadId || !tone) {
     return res.status(400).json({ error: 'leadId and tone are required' });
@@ -22,11 +22,12 @@ const generateMessage = async (req, res) => {
     }
 
     // Generate message using OpenAI
-    const message = await generateOutreach(lead, tone);
+    const message = await generateOutreach(lead, tone, serviceFocus);
 
     res.status(200).json({
       leadId,
       tone,
+      serviceFocus,
       subject: message.subject,
       body: message.body,
     });

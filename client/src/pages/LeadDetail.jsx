@@ -10,6 +10,7 @@ const LeadDetail = () => {
   const [lead, setLead] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tone, setTone] = useState('friendly');
+  const [serviceFocus, setServiceFocus] = useState('WhatsApp Automation');
   const [generatedMessage, setGeneratedMessage] = useState({ subject: '', body: '' });
   const [generating, setGenerating] = useState(false);
   const [sending, setSending] = useState(false);
@@ -34,7 +35,8 @@ const LeadDetail = () => {
     try {
       const response = await axios.post('http://localhost:5000/api/outreach/generate', {
         leadId: id,
-        tone: tone
+        tone: tone,
+        serviceFocus: serviceFocus
       });
       setGeneratedMessage({
         subject: response.data.subject,
@@ -137,17 +139,31 @@ const LeadDetail = () => {
                 <Sparkles className="w-5 h-5 text-purple-600" />
                 <h3 className="font-bold">AI Outreach Assistant</h3>
               </div>
-              <div className="flex items-center space-x-2">
-                <label className="text-xs text-gray-500 font-medium uppercase">Tone:</label>
-                <select 
-                  value={tone}
-                  onChange={(e) => setTone(e.target.value)}
-                  className="text-sm border-gray-300 rounded-md py-1 px-2"
-                >
-                  <option value="friendly">Friendly</option>
-                  <option value="persuasive">Persuasive</option>
-                  <option value="formal">Formal</option>
-                </select>
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <label className="text-xs text-gray-500 font-medium uppercase">Tone:</label>
+                  <select 
+                    value={tone}
+                    onChange={(e) => setTone(e.target.value)}
+                    className="text-sm border-gray-300 rounded-md py-1 px-2"
+                  >
+                    <option value="friendly">Friendly</option>
+                    <option value="persuasive">Persuasive</option>
+                    <option value="formal">Formal</option>
+                  </select>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <label className="text-xs text-gray-500 font-medium uppercase">Focus:</label>
+                  <select 
+                    value={serviceFocus}
+                    onChange={(e) => setServiceFocus(e.target.value)}
+                    className="text-sm border-gray-300 rounded-md py-1 px-2"
+                  >
+                    <option value="WhatsApp Automation">WhatsApp Automation</option>
+                    <option value="AI Reply System">AI Reply System</option>
+                    <option value="Website Development">Website Development</option>
+                  </select>
+                </div>
                 <button 
                   onClick={handleGenerate}
                   disabled={generating}
