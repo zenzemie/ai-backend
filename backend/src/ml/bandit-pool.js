@@ -68,6 +68,13 @@ class ThompsonSampling {
             this.stats[arm].beta += 1;
         }
     }
+
+    addArm(armId) {
+        if (!this.arms.includes(armId)) {
+            this.arms.push(armId);
+            this.stats[armId] = { alpha: 1, beta: 1 };
+        }
+    }
 }
 
 module.exports = ThompsonSampling;

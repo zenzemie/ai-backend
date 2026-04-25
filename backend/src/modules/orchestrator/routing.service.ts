@@ -30,4 +30,18 @@ export class RoutingService {
     this.bandit.update(strategyId, reward);
     // Here we could also store cost/latency metrics for more advanced routing
   }
+
+  getStrategies() {
+    return this.strategies;
+  }
+
+  getPerformanceData() {
+    return this.bandit.stats;
+  }
+
+  addStrategy(strategy: any) {
+    this.strategies.push(strategy);
+    this.bandit.addArm(strategy.id);
+    this.logger.log(`Added new strategy: ${strategy.id}`);
+  }
 }
