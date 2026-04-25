@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Campaign {
+  id          String   @id @default(uuid())
+  name        String
+  industry    String
+  messageTemplate String
+  status      CampaignStatus @default(DRAFT)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  leads       Lead[]
+}
+
+enum CampaignStatus {
+  DRAFT
+  RUNNING
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+model Lead {
+  id          String   @id @default(uuid())
+  email       String
+  name        String?
+  metadata    Json?
+  status      LeadStatus @default(PENDING)
+  campaignId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campaign    Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  logs        OutreachLog[]
+
+  @@index([campaignId, status])
+  @@index([email])
+}
+
+enum LeadStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  BOUNCED
+}
+
+model OutreachLog {
+  id          String   @id @default(uuid())
+  leadId      String
+  status      String
+  message     String?
+  error       String?
+  sentAt      DateTime @default(now())
+
+  lead        Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+}

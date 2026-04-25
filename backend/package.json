@@ -3,10 +3,23 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "worker": "node src/workers/outreachWorker.js",
+    "dispatcher": "node src/workers/campaignDispatcher.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "bullmq": "^5.1.0",
+    "ioredis": "^5.3.2",
+    "@prisma/client": "^5.22.0",
+    "rate-limiter-flexible": "^4.0.1",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
   }
 }
