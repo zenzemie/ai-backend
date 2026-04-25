@@ -2,10 +2,13 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const nexus = require('./src/nexus');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+
+nexus.init().catch(err => console.error('Failed to init Nexus:', err));
 
 app.get('/', (req, res) => {
   res.send('Backend is running');
