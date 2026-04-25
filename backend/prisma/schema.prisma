@@ -7,6 +7,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+  SRE
+}
+
 model Campaign {
   id          String   @id @default(uuid())
   name        String
@@ -73,4 +88,16 @@ model AuditLog {
   resourceId   String?
   metadata     Json?
   createdAt    DateTime @default(now())
+}
+
+model KnowledgeGraph {
+  id        String   @id @default(uuid())
+  entity    String
+  relation  String
+  target    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([entity])
 }

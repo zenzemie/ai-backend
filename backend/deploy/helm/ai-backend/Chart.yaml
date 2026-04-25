@@ -1,0 +1,15 @@
+apiVersion: v2
+name: ai-backend
+description: A Helm chart for the AI-Native Platform
+version: 0.1.0
+appVersion: "2.0"
+dependencies:
+  - name: postgresql
+    version: 12.1.0
+    repository: https://charts.bitnami.com/bitnami
+  - name: redis
+    version: 17.4.0
+    repository: https://charts.bitnami.com/bitnami
+  - name: nats
+    version: 0.19.0
+    repository: https://nats-io.github.io/k8s/helm/charts/
