@@ -48,4 +48,4 @@ services:
         fromService:
           type: web
           name: ai-outreach-api
-          envVar: API_AUTH_KEY
+          envVarKey: API_AUTH_KEY
