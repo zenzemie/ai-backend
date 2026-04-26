@@ -23,6 +23,11 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Root check
+app.get('/', (req, res) => {
+  res.status(200).send('LeadForge API is running! Please visit your dashboard URL to use the system.');
+});
+
 // Error handling
 app.use((err, req, res, next) => {
   logger.error(err.stack);
