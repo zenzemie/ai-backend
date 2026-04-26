@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
     - uses: actions/checkout@v4
@@ -15,16 +16,28 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 22
+        cache: 'npm'
+        cache-dependency-path: |
+          server/package-lock.json
+          client/package-lock.json
 
-    - name: Install & Build Backend
+    - name: Install Backend
       run: |
         cd server
-        npm install
-        
-    - name: Install & Build Frontend
+        npm install --prefer-offline --no-audit
+
+    - name: Install Frontend
       run: |
         cd client
-        npm install
+        npm install --prefer-offline --no-audit
+
+    - name: Build Frontend
+      env:
+        NODE_OPTIONS: "--max-old-space-size=4096"
+        VITE_API_URL: "https://mock-url.com/api"
+        VITE_API_AUTH_KEY: "mock-key"
+      run: |
+        cd client
         npm run build
 
   deploy:
@@ -38,5 +51,5 @@ jobs:
           if [ "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" != "" ]; then
             curl -f -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
           else
-            echo "Deploy hook not configured."
+            echo "Deploy hook not configured. Skipping automated deploy."
           fi
