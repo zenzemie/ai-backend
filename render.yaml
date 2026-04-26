@@ -1,3 +1,19 @@
+envVarGroups:
+  - name: ai-outreach-shared
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: GOOGLE_PLACES_API_KEY
+        sync: false
+      - key: API_AUTH_KEY
+        generateValue: true
+
 services:
   # Backend API
   - type: web
@@ -13,18 +29,7 @@ services:
         value: 5000
       - key: NODE_ENV
         value: production
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_ANON_KEY
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: RESEND_API_KEY
-        sync: false
-      - key: GOOGLE_PLACES_API_KEY
-        sync: false
-      - key: API_AUTH_KEY
-        generateValue: true
+      - fromGroup: ai-outreach-shared
 
   # Frontend Dashboard
   - type: web
@@ -37,13 +42,5 @@ services:
     startCommand: npm start
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: ai-outreach-api
-          property: url
-      - key: VITE_API_AUTH_KEY
-        fromService:
-          type: web
-          name: ai-outreach-api
-          property: envVar
-          envVarKey: API_AUTH_KEY
+        value: https://ai-outreach-api.onrender.com/api
+      - fromGroup: ai-outreach-shared
