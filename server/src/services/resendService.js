@@ -1,7 +1,18 @@
 const { Resend } = require('resend');
 const logger = require('./logger');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend;
+
+try {
+  resend = new Resend(process.env.RESEND_API_KEY || 'missing');
+} catch (error) {
+  console.error('Failed to initialize Resend client:', error.message);
+  resend = {
+    emails: {
+      send: () => { throw new Error('Resend client not initialized'); }
+    }
+  };
+}
 
 const sendEmail = async (to, subject, html, retries = 3) => {
   for (let i = 0; i < retries; i++) {

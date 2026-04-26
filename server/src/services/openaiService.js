@@ -1,8 +1,21 @@
 const OpenAI = require('openai');
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openai;
+
+try {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY || 'missing',
+  });
+} catch (error) {
+  console.error('Failed to initialize OpenAI client:', error.message);
+  openai = {
+    chat: {
+      completions: {
+        create: () => { throw new Error('OpenAI client not initialized'); }
+      }
+    }
+  };
+}
 
 const generateOutreach = async (lead, tone, serviceFocus) => {
   const { name, website, industry, notes } = lead;
