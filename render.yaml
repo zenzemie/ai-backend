@@ -1,6 +1,8 @@
 envVarGroups:
   - name: ai-outreach-shared
     envVars:
+      - key: NODE_VERSION
+        value: 22
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
@@ -41,6 +43,8 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: VITE_API_URL
         value: https://ai-outreach-api.onrender.com/api
       - fromGroup: ai-outreach-shared
