@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Search, BarChart3, Database, Server, User } from 'lucide-react';
+import { LayoutDashboard, Users, Search, BarChart, Database, Server, User } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
 import Discovery from './pages/Discovery';
@@ -34,7 +34,7 @@ const AppContent = () => {
           <SidebarLink to="/" icon={LayoutDashboard} label="Overview" />
           <SidebarLink to="/discovery" icon={Search} label="Discovery" />
           <SidebarLink to="/leads" icon={Users} label="Leads" />
-          <SidebarLink to="/analytics" icon={BarChart3} label="Analytics" />
+          <SidebarLink to="/analytics" icon={BarChart} label="Analytics" />
         </nav>
         <div className="p-4 border-t">
            <button onClick={() => setMockMode(!mockMode)} className={`w-full py-2 px-4 rounded-lg text-[10px] font-black uppercase tracking-widest ${mockMode ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
