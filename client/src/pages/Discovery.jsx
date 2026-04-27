@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Loader2, CheckCircle, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, MapPin, Loader2, CheckCircle, ExternalLink, Sparkles, ArrowRight } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import { discoverLeads } from '../api/leads';
 
 const Discovery = () => {
+  const navigate = useNavigate();
   const { mockMode } = useSettings();
   const [category, setCategory] = useState('');
   const [location, setLocation] = useState('');
@@ -19,148 +21,113 @@ const Discovery = () => {
     setError('');
     setResults([]);
 
-    if (mockMode) {
-      setTimeout(() => {
-        const mockResults = [
-          { id: 'mock-1', name: 'Example Business 1', website: 'https://example.com', score: 85, phone: '+44 20 1234 5678', email: true },
-          { id: 'mock-2', name: 'Example Business 2', website: 'https://example.org', score: 72, phone: '+44 20 8765 4321', email: false },
-          { id: 'mock-3', name: 'Example Business 3', website: 'https://example.net', score: 94, phone: '+44 20 5555 6666', email: true },
-        ];
-        setResults(mockResults);
-        setLoading(false);
-      }, 1500);
-      return;
-    }
-    
     try {
-      const response = await discoverLeads({
-        category,
-        location
-      });
+      const response = await discoverLeads({ category, location });
       setResults(response.data.leads || []);
     } catch (err) {
       console.error(err);
-      setError('Failed to discover leads. Ensure the backend is running and API keys are set.');
+      setError('Connection Error: Make sure your API keys are set in Render.');
     } finally {
       setLoading(false);
     }
   };
 
-  const industries = [
-    { value: 'restaurant', label: 'Restaurants & Cafes' },
-    { value: 'salon', label: 'Hair & Beauty Salons' },
-    { value: 'clinic', label: 'Medical & Dental Clinics' },
-    { value: 'hotel', label: 'Boutique Hotels' },
-    { value: 'gym', label: 'Gyms & Fitness' },
-    { value: 'accountant', label: 'Accounting Services' },
-    { value: 'lawyer', label: 'Legal Services' },
-    { value: 'plumber', label: 'Plumbing Services' },
-    { value: 'electrician', label: 'Electrical Services' },
-    { value: 'physiotherapist', label: 'Physiotherapy Clinics' },
-    { value: 'chiropractor', label: 'Chiropractic Clinics' },
-  ];
-
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-800">Lead Discovery</h1>
-        <p className="text-gray-500 mt-1">Search Yelp for new business opportunities.</p>
+    <div className="max-w-6xl mx-auto space-y-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Discovery Engine</h1>
+          <p className="text-slate-500 mt-2 font-medium">Find high-value businesses ready for automation.</p>
+        </div>
+        <div className="flex items-center space-x-2 bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100">
+          <Sparkles className="w-4 h-4 text-indigo-600" />
+          <span className="text-xs font-bold text-indigo-700 uppercase tracking-widest">Powered by Yelp AI</span>
+        </div>
       </div>
 
-      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 max-w-4xl">
-        <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4 items-end">
-          <div className="flex-1 w-full space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase ml-1">Category</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <select 
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-700"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                required
-              >
-                <option value="">Select industry...</option>
-                {industries.map(ind => (
-                  <option key={ind.value} value={ind.value}>{ind.label}</option>
-                ))}
-              </select>
-            </div>
+      {/* Search Bar */}
+      <div className="glass-card p-2 shadow-xl shadow-slate-200/50">
+        <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-2">
+          <div className="flex-1 relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input 
+              className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium"
+              placeholder="What business? (e.g. Italian Restaurant)"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              required
+            />
           </div>
-          
-          <div className="flex-1 w-full space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase ml-1">Location</label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="e.g. London, UK"
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-700"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                required
-              />
-            </div>
+          <div className="flex-1 relative">
+            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input 
+              className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium"
+              placeholder="Where? (e.g. Manchester, UK)"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              required
+            />
           </div>
-
-          <button 
-            type="submit"
-            disabled={loading}
-            className="w-full md:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 flex items-center justify-center whitespace-nowrap"
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : 'Discover Leads'}
+          <button type="submit" disabled={loading} className="btn-primary px-10">
+            {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Find Leads'}
           </button>
         </form>
       </div>
 
-      {mockMode && (
-        <div className="p-4 bg-orange-50 text-orange-700 rounded-lg border border-orange-100 max-w-4xl text-sm font-medium">
-          Note: Currently in Mock Data Mode. Results are generated locally for testing the UI.
-        </div>
-      )}
-
-      {error && (
-        <div className="p-4 bg-red-50 text-red-600 rounded-lg border border-red-100 max-w-4xl">
-          {error}
-        </div>
-      )}
-
-      {results.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden max-w-4xl">
-          <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-            <h2 className="font-bold text-gray-800">Results ({results.length})</h2>
-            <span className="text-xs text-green-600 font-bold bg-green-50 px-2 py-1 rounded">
-              {mockMode ? 'Mock results' : 'Auto-saved to Leads'}
-            </span>
+      {/* Results Section */}
+      {loading && results.length === 0 ? (
+        <div className="py-24 text-center space-y-6">
+          <div className="relative inline-block">
+             <div className="absolute inset-0 bg-indigo-500 blur-2xl opacity-20 animate-pulse"></div>
+             <Loader2 className="w-16 h-16 animate-spin text-indigo-600 relative mx-auto" />
           </div>
-          <div className="divide-y divide-gray-50">
-            {results.map((lead) => (
-              <div key={lead.id} className="p-6 flex items-start justify-between">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-gray-800">{lead.name}</h3>
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    {lead.website && (
-                      <a href={lead.website} target="_blank" rel="noreferrer" className="flex items-center text-blue-500 hover:underline">
-                        <ExternalLink className="w-3 h-3 mr-1" /> Website
-                      </a>
-                    )}
-                    {lead.email && <span className="flex items-center"><CheckCircle className="w-3 h-3 mr-1 text-green-500" /> Email Found</span>}
-                    <span>{lead.phone || 'No Phone'}</span>
+          <p className="text-slate-400 font-bold uppercase tracking-widest animate-pulse">Scouring the web for contact info...</p>
+        </div>
+      ) : results.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {results.map((lead) => (
+            <div key={lead.id} className="glass-card p-6 flex flex-col justify-between hover:border-indigo-300 transition-all group">
+              <div className="space-y-4">
+                <div className="flex justify-between items-start">
+                  <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center font-bold text-slate-400 uppercase">
+                    {lead.name.charAt(0)}
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xl font-black text-indigo-600 block">{lead.score}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Score</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-sm font-bold text-blue-600 block">{lead.score} pts</span>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-tighter">Match Score</p>
+                <div>
+                  <h3 className="font-black text-slate-800 text-lg group-hover:text-indigo-600 transition-colors">{lead.name}</h3>
+                  <div className="flex items-center text-slate-400 text-xs font-bold mt-1">
+                    <MapPin className="w-3 h-3 mr-1" /> {location}
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {lead.website ? <span className="status-badge bg-green-50 text-green-600">Website Found</span> : <span className="status-badge bg-amber-50 text-amber-600 text-[9px]">Missing Website</span>}
+                  {lead.phone && <span className="status-badge bg-blue-50 text-blue-600">Phone Available</span>}
                 </div>
               </div>
-            ))}
-          </div>
+              
+              <button 
+                onClick={() => navigate(`/leads/${lead.id}`)}
+                className="mt-8 w-full btn-secondary text-sm group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600"
+              >
+                Start AI Outreach <ArrowRight className="w-4 h-4 ml-2" />
+              </button>
+            </div>
+          ))}
         </div>
-      )}
-
-      {loading && results.length === 0 && (
-        <div className="py-20 text-center space-y-4 max-w-4xl">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto" />
-          <p className="text-gray-400 animate-pulse">Our AI is searching Yelp and crawling websites for contact info...</p>
+      ) : error ? (
+        <div className="glass-card p-8 text-center border-red-100 bg-red-50">
+          <p className="text-red-600 font-bold">{error}</p>
+        </div>
+      ) : (
+        <div className="py-24 text-center border-2 border-dashed border-slate-200 rounded-3xl">
+          <div className="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Search className="w-8 h-8 text-slate-300" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-400 italic">Target an industry and location to begin...</h2>
         </div>
       )}
     </div>
