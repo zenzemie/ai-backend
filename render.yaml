@@ -35,7 +35,7 @@ services:
     plan: free
     region: oregon
     rootDir: client
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_VERSION
