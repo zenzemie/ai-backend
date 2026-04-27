@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Search, BarChart3, Settings, Database, Server } from 'lucide-react';
+import { LayoutDashboard, Users, Search, BarChart3, Database, Server } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
 import Discovery from './pages/Discovery';
@@ -20,7 +20,7 @@ const AppContent = () => {
   return (
     <div className="flex h-screen bg-gray-50 text-gray-900 font-sans">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-full">
         <div className="p-8 flex items-center space-x-3">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
             <span className="text-white font-black text-xl">L</span>
@@ -28,7 +28,7 @@ const AppContent = () => {
           <h1 className="text-xl font-black tracking-tight text-gray-800">LeadForge</h1>
         </div>
         
-        <nav className="flex-1 px-4 py-4 space-y-1">
+        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -40,8 +40,12 @@ const AppContent = () => {
                   : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}
               `}
             >
-              <item.icon className={`w-5 h-5 mr-3 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
-              {item.label}
+              {({ isActive }) => (
+                <>
+                  <item.icon className={`w-5 h-5 mr-3 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
+                  {item.label}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -62,7 +66,7 @@ const AppContent = () => {
           <div className="bg-gray-50 rounded-xl p-4 flex items-center space-x-3">
             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xs font-bold">ME</div>
             <div>
-              <p className="text-xs font-bold text-gray-700 uppercase tracking-tighter">Project Owner</p>
+              <p className="text-xs font-bold text-gray-700 uppercase tracking-tighter">Owner</p>
               <p className="text-[10px] text-gray-400">Marketing Lead</p>
             </div>
           </div>
