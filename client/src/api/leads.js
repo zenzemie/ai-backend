@@ -11,10 +11,16 @@ const api = axios.create({
   },
 });
 
+// Leads Management
 export const getLeads = () => api.get('/leads');
 export const getLead = (id) => api.get(`/leads/${id}`);
 export const createLead = (leadData) => api.post('/leads', leadData);
 export const updateLead = (id, leadData) => api.patch(`/leads/${id}`, leadData);
 export const deleteLead = (id) => api.delete(`/leads/${id}`);
+
+// Discovery & Outreach (THESE WERE MISSING)
+export const discoverLeads = (data) => api.post('/leads/discover', data);
+export const generateMessage = (data) => api.post('/outreach/generate', data);
+export const sendEmailOutreach = (data) => api.post('/outreach/send-email', data);
 
 export default api;

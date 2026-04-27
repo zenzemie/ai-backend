@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getLead, updateLead } from '../api/leads';
-import axios from 'axios';
+import { getLead, generateMessage, sendEmailOutreach } from '../api/leads';
 import { ChevronLeft, Send, Sparkles, Globe, Phone, Mail, Clock, Database } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 
@@ -45,18 +44,6 @@ const LeadDetail = () => {
       setLead(response.data);
     } catch (error) {
       console.error('Error fetching lead details:', error);
-      if (mockMode) {
-        setLead({
-          id,
-          name: 'Demo Lead (API Failed)',
-          website: 'https://demo.com',
-          email: 'demo@demo.com',
-          score: 50,
-          status: 'not_contacted',
-          industry: 'general',
-          created_at: new Date().toISOString()
-        });
-      }
     } finally {
       setLoading(false);
     }
@@ -76,7 +63,7 @@ const LeadDetail = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/outreach/generate', {
+      const response = await generateMessage({
         leadId: id,
         tone: tone,
         serviceFocus: serviceFocus
@@ -105,13 +92,13 @@ const LeadDetail = () => {
     }
 
     try {
-      await axios.post('http://localhost:5000/api/outreach/send', {
+      await sendEmailOutreach({
         leadId: id,
         subject: generatedMessage.subject,
         body: generatedMessage.body
       });
       alert('Email sent successfully!');
-      fetchLead(); // Refresh to see updated status
+      fetchLead();
     } catch (error) {
       alert('Failed to send email. Check console for details.');
       console.error(error);
@@ -142,14 +129,13 @@ const LeadDetail = () => {
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Business Context */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <h2 className="text-xl font-bold mb-4">{lead.name}</h2>
             <div className="space-y-3">
               <div className="flex items-center text-gray-600 text-sm">
                 <Globe className="w-4 h-4 mr-2" />
-                {lead.website ? <a href={lead.website} target="_blank" className="text-blue-600 hover:underline">{lead.website}</a> : 'No website'}
+                {lead.website ? <a href={lead.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{lead.website}</a> : 'No website'}
               </div>
               <div className="flex items-center text-gray-600 text-sm">
                 <Mail className="w-4 h-4 mr-2" />
@@ -191,10 +177,9 @@ const LeadDetail = () => {
           </div>
         </div>
 
-        {/* Right Column: AI Outreach Panel */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-4 bg-gray-50 border-bottom flex items-center justify-between">
+            <div className="p-4 bg-gray-50 border-b flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Sparkles className="w-5 h-5 text-purple-600" />
                 <h3 className="font-bold">AI Outreach Assistant</h3>

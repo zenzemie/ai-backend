@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Search, MapPin, Loader2, CheckCircle, ExternalLink } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
+import { discoverLeads } from '../api/leads';
 
 const Discovery = () => {
   const { mockMode } = useSettings();
@@ -20,7 +20,6 @@ const Discovery = () => {
     setResults([]);
 
     if (mockMode) {
-      // Mock data for demo purposes
       setTimeout(() => {
         const mockResults = [
           { id: 'mock-1', name: 'Example Business 1', website: 'https://example.com', score: 85, phone: '+44 20 1234 5678', email: true },
@@ -34,7 +33,7 @@ const Discovery = () => {
     }
     
     try {
-      const response = await axios.post('http://localhost:5000/api/leads/discover', {
+      const response = await discoverLeads({
         category,
         location
       });
@@ -65,7 +64,7 @@ const Discovery = () => {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-800">Lead Discovery</h1>
-        <p className="text-gray-500 mt-1">Search Google Places for new business opportunities.</p>
+        <p className="text-gray-500 mt-1">Search Yelp for new business opportunities.</p>
       </div>
 
       <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 max-w-4xl">
@@ -140,7 +139,7 @@ const Discovery = () => {
                   <h3 className="font-bold text-gray-800">{lead.name}</h3>
                   <div className="flex items-center space-x-4 text-sm text-gray-500">
                     {lead.website && (
-                      <a href={lead.website} target="_blank" className="flex items-center text-blue-500 hover:underline">
+                      <a href={lead.website} target="_blank" rel="noreferrer" className="flex items-center text-blue-500 hover:underline">
                         <ExternalLink className="w-3 h-3 mr-1" /> Website
                       </a>
                     )}
@@ -161,7 +160,7 @@ const Discovery = () => {
       {loading && results.length === 0 && (
         <div className="py-20 text-center space-y-4 max-w-4xl">
           <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto" />
-          <p className="text-gray-400 animate-pulse">Our AI is searching Google and crawling websites for contact info...</p>
+          <p className="text-gray-400 animate-pulse">Our AI is searching Yelp and crawling websites for contact info...</p>
         </div>
       )}
     </div>

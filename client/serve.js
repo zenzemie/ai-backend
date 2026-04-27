@@ -9,13 +9,14 @@ const app = express();
 const port = process.env.PORT || 5173;
 const distPath = path.resolve(__dirname, 'dist');
 
-// NO AUTH - Temporary for testing
+// Serve EVERYTHING in dist
 app.use(express.static(distPath));
 
+// Redirect all requests to index.html (for SPA routing)
 app.get('*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
 app.listen(port, '0.0.0.0', () => {
-  console.log(`Public Test Mode: Dashboard live on port ${port}`);
+  console.log(`LeadForge Dashboard live on port ${port}`);
 });
