@@ -3,3 +3,5 @@ resend- re_HVh89Fnj_pPWiLMX77gN5gq5YwqDhqHA1
 Supabase- sb_publishable_9f2M0sJkuJQmZq4yphSj4A_H2DAaFVW
 https://xxeklkjkhbgmkytmkoqu.supabase.co
 yelp ai :EpRkWXEfkQfNzEF_vTZAsth3lBiWllm9kNeloWZADk5lSME0j3zlSnivLGh2Dr3ex59cDX6divgEXNFcZwmCFgRuDuDlC43wMt4pQ0rss2kY_jDT6-WhmxFM3V3uaXYx
+postgresql://postgres.xxeklkjkhbgmkytmkoqu:FY3KxK1bXSX9fD5u@://supabase.com
+postgresql://postgres:FY3KxK1bXSX9fD5u@db.xxeklkjkhbgmkytmkoqu.supabase.co:5432/postgres
