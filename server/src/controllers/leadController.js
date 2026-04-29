@@ -1,10 +1,25 @@
-const supabase = require('../config/supabase');
-const { searchBusinesses, calculateScore } = require('../services/discoveryService');
+const prisma = require('../config/prisma');
+const { searchBusinesses, calculateLeadMetrics, crawlWebsite } = require('../services/discoveryService');
+const { emitNewLeadDiscovered, emitStatusChanged } = require('../services/automation/triggerService');
 
 const discoverLeads = async (req, res) => {
-  const { category, location } = req.body;
+  const { category, location, accountId } = req.body;
 
   try {
+    // ... (logic for targetAccountId)
+    let targetAccountId = accountId;
+    if (!targetAccountId) {
+      const defaultAccount = await prisma.account.findFirst();
+      if (!defaultAccount) {
+        const newAcc = await prisma.account.create({
+          data: { name: 'Main Agency', domain: 'main.leadforge.ai' }
+        });
+        targetAccountId = newAcc.id;
+      } else {
+        targetAccountId = defaultAccount.id;
+      }
+    }
+
     console.log(`Starting discovery for ${category} in ${location}...`);
     const businesses = await searchBusinesses(category, location);
     
@@ -14,32 +29,61 @@ const discoverLeads = async (req, res) => {
 
     const processedLeads = [];
 
-    for (const business of businesses) {
-      const score = calculateScore(business);
+    // Map businesses to a list of promises for faster processing
+    const processingPromises = businesses.map(async (business) => {
+      const metrics = calculateLeadMetrics(business, category);
+      
+      // Try to find more info from website
+      const websiteInfo = await crawlWebsite(business.url);
       
       const leadData = {
-        id: business.id || `temp-${Math.random().toString(36).substr(2, 9)}`,
         name: business.name,
         website: business.url,
         phone: business.display_phone || null,
-        email: null, // Yelp doesn't give email, requires crawler later
+        email: websiteInfo.email,
+        instagram: websiteInfo.instagram,
+        facebook: websiteInfo.facebook,
         industry: category,
-        score: score,
-        status: 'not_contacted',
-        notes: `Rating: ${business.rating}, Reviews: ${business.review_count}`
+        rating: business.rating,
+        reviewCount: business.review_count,
+        city: location,
+        googlePlaceId: business.id, // Using Yelp ID as placeholder if Google not used
+        
+        // Operation Black Forge Metrics
+        automationNeedScore: metrics.automationNeedScore,
+        industryTier: metrics.industryTier,
+        opportunityScore: metrics.opportunityScore,
+        revenuePotential: metrics.revenuePotential,
+        urgency: metrics.urgency,
+        hasUrgencyMarker: metrics.hasUrgencyMarker,
+        hasEfficiencyMarker: metrics.hasEfficiencyMarker,
+        hasRecoveryMarker: metrics.hasRecoveryMarker,
+        
+        accountId: targetAccountId,
+        status: 'DISCOVERED',
+        notes: `Yelp Rating: ${business.rating}, Reviews: ${business.review_count}`
       };
 
-      // ATTEMPT to save to DB, but don't stop the request if it fails
-      supabase.from('leads').insert([leadData]).then(({ error }) => {
-        if (error) console.warn('Supabase Lead Save skipped/failed:', error.message);
+      // Upsert to prevent duplicates
+      return prisma.lead.upsert({
+        where: { googlePlaceId: business.id },
+        update: leadData,
+        create: leadData,
       });
+    });
 
-      processedLeads.push(leadData);
-    }
+    const savedLeads = await Promise.all(processingPromises);
+
+    // Emit triggers for new leads
+    savedLeads.forEach(lead => {
+      emitNewLeadDiscovered(lead).catch(err => 
+        console.error(`Failed to emit lead trigger for ${lead.id}:`, err.message)
+      );
+    });
 
     res.status(200).json({
-      message: `Found ${processedLeads.length} leads.`,
-      leads: processedLeads
+      message: `Found and analyzed ${savedLeads.length} leads.`,
+      leads: savedLeads
     });
 
   } catch (error) {
@@ -48,51 +92,84 @@ const discoverLeads = async (req, res) => {
   }
 };
 
+const getAllLeads = async (req, res) => {
+  try {
+    const leads = await prisma.lead.findMany({
+      orderBy: { opportunityScore: 'desc' }
+    });
+    res.status(200).json(leads);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to fetch leads' });
+  }
+};
+
+const getLeadById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const lead = await prisma.lead.findUnique({
+      where: { id },
+      include: { outreachLogs: true }
+    });
+    if (!lead) return res.status(404).json({ error: 'Lead not found' });
+    res.status(200).json(lead);
+  } catch (e) {
+    res.status(500).json({ error: 'Database error' });
+  }
+};
+
+const updateLead = async (req, res) => {
+  try {
+    const oldLead = await prisma.lead.findUnique({
+      where: { id: req.params.id }
+    });
+    
+    const lead = await prisma.lead.update({
+      where: { id: req.params.id },
+      data: req.body
+    });
+    
+    // Emit status change trigger if changed
+    if (oldLead && req.body.status && oldLead.status !== req.body.status) {
+      emitStatusChanged(lead.id, oldLead.status, lead.status).catch(err =>
+        console.error(`Failed to emit status trigger for ${lead.id}:`, err.message)
+      );
+    }
+    
+    res.status(200).json(lead);
+  } catch (e) {
+    res.status(500).json({ error: 'Update failed' });
+  }
+};
+
+const deleteLead = async (req, res) => {
+  try {
+    await prisma.lead.delete({ where: { id: req.params.id } });
+    res.status(204).send();
+  } catch (e) {
+    res.status(500).json({ error: 'Delete failed' });
+  }
+};
+
+const createLead = async (req, res) => {
+  try {
+    const lead = await prisma.lead.create({ data: req.body });
+    
+    // Emit new lead trigger
+    emitNewLeadDiscovered(lead).catch(err =>
+      console.error(`Failed to emit lead trigger for ${lead.id}:`, err.message)
+    );
+    
+    res.status(201).json(lead);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to create lead' });
+  }
+};
+
 module.exports = {
   discoverLeads,
-  getAllLeads: async (req, res) => {
-    try {
-      const { data, error } = await supabase.from('leads').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
-      res.status(200).json(data || []);
-    } catch (e) {
-      // Fallback to empty list so UI doesn't crash
-      res.status(200).json([]);
-    }
-  },
-  getLeadById: async (req, res) => {
-    const { id } = req.params;
-    try {
-      const { data, error } = await supabase.from('leads').select('*').eq('id', id).single();
-      if (error || !data) {
-         // If not in DB, create a temporary one so the Hub can open
-         return res.status(200).json({
-           id,
-           name: 'Recent Lead',
-           industry: 'Service',
-           status: 'not_contacted',
-           score: 50
-         });
-      }
-      res.status(200).json(data);
-    } catch (e) {
-      res.status(200).json({ id, name: 'Lead', score: 0 });
-    }
-  },
-  updateLead: async (req, res) => {
-    try {
-      await supabase.from('leads').update(req.body).eq('id', req.params.id);
-      res.status(200).json({ success: true });
-    } catch (e) {
-      res.status(200).json({ success: false });
-    }
-  },
-  deleteLead: async (req, res) => {
-    try {
-      await supabase.from('leads').delete().eq('id', req.params.id);
-      res.status(204).send();
-    } catch (e) {
-      res.status(204).send();
-    }
-  }
+  getAllLeads,
+  getLeadById,
+  updateLead,
+  deleteLead,
+  createLead,
 };

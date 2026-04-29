@@ -5,15 +5,17 @@ const SettingsContext = createContext();
 export const SettingsProvider = ({ children }) => {
   const [mockMode, setMockMode] = useState(() => {
     const saved = localStorage.getItem('mockMode');
-    return saved ? JSON.parse(saved) : false;
+    return saved ? JSON.parse(saved) : true; // Default to true for better initial demo experience
   });
 
   useEffect(() => {
     localStorage.setItem('mockMode', JSON.stringify(mockMode));
   }, [mockMode]);
 
+  const toggleMockMode = () => setMockMode(!mockMode);
+
   return (
-    <SettingsContext.Provider value={{ mockMode, setMockMode }}>
+    <SettingsContext.Provider value={{ mockMode, setMockMode, toggleMockMode }}>
       {children}
     </SettingsContext.Provider>
   );

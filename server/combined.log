@@ -1,0 +1,8 @@
+{"level":"info","message":"LeadForge AI API running on http://0.0.0.0:3001","service":"ai-outreach-api","timestamp":"2026-04-28T18:07:07.715Z"}
+{"level":"info","message":"127.0.0.1 - - [28/Apr/2026:18:07:10 +0000] \"GET /health HTTP/1.1\" 200 54 \"-\" \"curl/8.5.0\"","service":"ai-outreach-api","timestamp":"2026-04-28T18:07:10.269Z"}
+{"level":"info","message":"127.0.0.1 - - [28/Apr/2026:18:07:12 +0000] \"GET /health HTTP/1.1\" 200 54 \"-\" \"curl/8.5.0\"","service":"ai-outreach-api","timestamp":"2026-04-28T18:07:12.530Z"}
+{"level":"info","message":"127.0.0.1 - - [28/Apr/2026:18:07:12 +0000] \"GET /api/leads HTTP/1.1\" 500 33 \"-\" \"curl/8.5.0\"","service":"ai-outreach-api","timestamp":"2026-04-28T18:07:12.613Z"}
+{"level":"info","message":"Initializing trigger listeners...","service":"ai-outreach-api","timestamp":"2026-04-28T18:17:22.784Z"}
+{"level":"info","message":"127.0.0.1 - - [28/Apr/2026:18:18:24 +0000] \"GET /api/automation/templates/list HTTP/1.1\" 404 168 \"-\" \"curl/8.5.0\"","service":"ai-outreach-api","timestamp":"2026-04-28T18:18:24.617Z"}
+{"level":"info","message":"127.0.0.1 - - [28/Apr/2026:18:18:32 +0000] \"GET /api/automations/templates/list HTTP/1.1\" 200 1557 \"-\" \"curl/8.5.0\"","service":"ai-outreach-api","timestamp":"2026-04-28T18:18:32.941Z"}
+{"level":"info","message":"127.0.0.1 - - [28/Apr/2026:18:18:46 +0000] \"GET /api/leads HTTP/1.1\" 500 33 \"-\" \"curl/8.5.0\"","service":"ai-outreach-api","timestamp":"2026-04-28T18:18:46.338Z"}

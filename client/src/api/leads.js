@@ -37,9 +37,16 @@ export const createLead = (leadData) => api.post('/leads', leadData);
 export const updateLead = (id, leadData) => api.patch(`/leads/${id}`, leadData);
 export const deleteLead = (id) => api.delete(`/leads/${id}`);
 
-// Discovery & Outreach (THESE WERE MISSING)
+// Discovery & Outreach
 export const discoverLeads = (data) => api.post('/leads/discover', data);
 export const generateMessage = (data) => api.post('/outreach/generate', data);
 export const sendEmailOutreach = (data) => api.post('/outreach/send-email', data);
+
+// Websites & Funnels
+export const getWebsites = () => api.get('/websites');
+export const getWebsite = (id) => api.get(`/websites/${id}`);
+export const generateWebsite = (data) => api.post('/websites/generate', data);
+export const updateWebsite = (id, data) => api.put(`/websites/${id}`, data);
+export const deleteWebsite = (id) => api.delete(`/websites/${id}`);
 
 export default api;

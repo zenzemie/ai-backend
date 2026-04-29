@@ -1,8 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getLead, generateMessage, sendEmailOutreach } from '../api/leads';
-import { ChevronLeft, Send, Sparkles, Globe, Phone, Mail, Clock, Database, CheckCircle, ShieldCheck, Zap, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  getLead, 
+  generateMessage, 
+  sendEmailOutreach,
+  generateWebsite 
+} from '../api/leads';
+import { 
+  ChevronLeft, 
+  Send, 
+  Sparkles, 
+  Globe, 
+  Phone, 
+  Mail, 
+  Clock, 
+  Database, 
+  CheckCircle, 
+  ShieldCheck, 
+  Zap, 
+  Loader2,
+  ExternalLink,
+  MessageSquare,
+  ArrowRight,
+  MoreVertical,
+  Cpu,
+  Rocket
+} from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
+
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs) {
+  return twMerge(clsx(inputs));
+}
 
 const LeadDetail = () => {
   const { id } = useParams();
@@ -15,12 +47,32 @@ const LeadDetail = () => {
   const [generatedMessage, setGeneratedMessage] = useState({ subject: '', body: '' });
   const [generating, setGenerating] = useState(false);
   const [sending, setSending] = useState(false);
+  const [generatingWebsite, setGeneratingWebsite] = useState(false);
 
   useEffect(() => {
     fetchLead();
-  }, [id]);
+  }, [id, mockMode]);
 
   const fetchLead = async () => {
+    setLoading(true);
+    if (mockMode) {
+       setTimeout(() => {
+         setLead({
+            id,
+            name: 'Apex Fitness Group',
+            industry: 'Health & Wellness',
+            website: 'https://apexfitness.example.com',
+            email: 'contact@apexfitness.example.com',
+            phone: '+44 20 7123 4567',
+            score: 98,
+            status: 'not_contacted',
+            notes: 'Business has high review volume but low engagement on automation. Perfect candidate for AI reply systems.',
+            created_at: new Date().toISOString()
+         });
+         setLoading(false);
+       }, 800);
+       return;
+    }
     try {
       const response = await getLead(id);
       setLead(response.data);
@@ -33,148 +85,327 @@ const LeadDetail = () => {
 
   const handleGenerate = async () => {
     setGenerating(true);
+    if (mockMode) {
+      setTimeout(() => {
+        setGeneratedMessage({
+          subject: `Automating ${lead?.name || 'your business'}'s growth`,
+          body: `Hi ${lead?.name || 'there'},\n\nI noticed you're doing incredible work in the ${lead?.industry || 'industry'} space. However, I also saw some opportunities to streamline your customer replies using AI.\n\nWe build custom ${serviceFocus} solutions that could help you recover roughly 15 hours of staff time per week. Would you be open to a 5-minute demo?\n\nBest,\nLeadForge AI`
+        });
+        setGenerating(false);
+      }, 1500);
+      return;
+    }
     try {
       const response = await generateMessage({ leadId: id, tone, serviceFocus });
       setGeneratedMessage({ subject: response.data.subject, body: response.data.body });
     } catch (error) {
-      alert('AI Generation failed. Check API keys.');
+      console.error(error);
     } finally {
       setGenerating(false);
     }
   };
 
   const handleSend = async () => {
-    if (!window.confirm(`Send this personalized pitch to ${lead.name}?`)) return;
     setSending(true);
+    if (mockMode) {
+      setTimeout(() => {
+        alert('SIMULATED: Outreach transmitted via Resend API.');
+        setLead(prev => ({ ...prev, status: 'sent' }));
+        setSending(false);
+      }, 1000);
+      return;
+    }
     try {
       await sendEmailOutreach({ leadId: id, subject: generatedMessage.subject, body: generatedMessage.body });
-      alert('Outreach successful! Status updated.');
-      fetchLead();
+      setLead(prev => ({ ...prev, status: 'sent' }));
     } catch (error) {
-      alert('Email sending failed. Is your Resend key active?');
+      console.error(error);
     } finally {
       setSending(false);
     }
   };
 
+  const handleGenerateWebsite = async () => {
+    setGeneratingWebsite(true);
+    if (mockMode) {
+      setTimeout(() => {
+        setGeneratingWebsite(false);
+        navigate('/websites');
+      }, 2000);
+      return;
+    }
+    try {
+      const response = await generateWebsite({ leadId: id, templateId: 'elite-v1' });
+      navigate(`/websites/builder/${response.data.id}`);
+    } catch (error) {
+      console.error(error);
+      alert('Failed to generate website: ' + error.message);
+    } finally {
+      setGeneratingWebsite(false);
+    }
+  };
+
   if (loading) return (
-    <div className="py-20 text-center">
-      <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mx-auto mb-4" />
-      <p className="text-slate-400 font-bold uppercase tracking-widest">Opening Outreach Hub...</p>
+    <div className="py-32 text-center space-y-4">
+      <div className="relative inline-block">
+        <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+        <Cpu className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-500" size={20} />
+      </div>
+      <p className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">Accessing Outreach Hub...</p>
     </div>
   );
 
-  if (!lead) return <div className="text-center py-20">Lead not found.</div>;
+  if (!lead) return <div className="text-center py-32 text-zinc-500">Lead profile not found in system.</div>;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-20">
-      <button onClick={() => navigate('/discovery')} className="flex items-center text-slate-400 hover:text-indigo-600 font-bold text-sm transition-colors group">
-        <ChevronLeft className="w-5 h-5 mr-1 group-hover:-translate-x-1 transition-transform" /> Back to Discovery
-      </button>
+    <div className="p-8 space-y-8 max-w-7xl mx-auto">
+      {/* Navigation & Actions */}
+      <div className="flex items-center justify-between">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="flex items-center gap-2 text-zinc-500 hover:text-white font-bold text-xs uppercase tracking-widest transition-all group"
+        >
+          <ChevronLeft className="group-hover:-translate-x-1 transition-transform" size={18} />
+          Return to Leads
+        </button>
+        
+        <div className="flex items-center gap-3">
+           <button className="p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-500 hover:text-white transition-all">
+             <MoreVertical size={18} />
+           </button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left: Lead Intel */}
+        {/* Left Column: Lead Information */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="glass-card p-8 space-y-6 border-l-4 border-l-indigo-500">
-            <div>
-              <span className="status-badge bg-indigo-50 text-indigo-600 mb-2 inline-block">Verified Lead</span>
-              <h2 className="text-3xl font-black text-slate-900 leading-tight">{lead.name}</h2>
-            </div>
-            
-            <div className="space-y-4 pt-4 border-t border-slate-100 text-sm">
-              <div className="flex items-center text-slate-600 font-medium">
-                <Globe className="w-5 h-5 mr-3 text-slate-300" />
-                <a href={lead.website} target="_blank" rel="noreferrer" className="hover:text-indigo-600 truncate underline decoration-slate-200 uppercase tracking-tighter">{lead.website || 'No website'}</a>
-              </div>
-              <div className="flex items-center text-slate-600 font-medium">
-                <Mail className="w-5 h-5 mr-3 text-slate-300" />
-                {lead.email || <span className="text-amber-500 italic">Finding email...</span>}
-              </div>
-              <div className="flex items-center text-slate-600 font-medium">
-                <Phone className="w-5 h-5 mr-3 text-slate-300" />
-                {lead.phone || 'No phone'}
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-4 rounded-2xl flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Opportunity Score</p>
-                <p className="text-2xl font-black text-indigo-600">{lead.score}/100</p>
-              </div>
-              <div className={`px-3 py-1 rounded-lg font-black text-[10px] uppercase ${lead.status === 'sent' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
-                {lead.status}
-              </div>
-            </div>
-          </div>
-
-          <div className="glass-card p-6 bg-slate-900 text-white">
-            <h3 className="font-bold flex items-center mb-4 text-indigo-400">
-              <Zap className="w-4 h-4 mr-2" /> Qualification AI
-            </h3>
-            <p className="text-slate-300 text-sm leading-relaxed italic">
-              "{lead.notes || 'This lead shows high potential for automation services.'}"
-            </p>
-          </div>
-        </div>
-
-        {/* Right: AI Workspace */}
-        <div className="lg:col-span-8">
-          <div className="glass-card overflow-hidden shadow-2xl shadow-indigo-100/50 flex flex-col h-full">
-            <div className="p-6 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center space-x-2">
-                <Sparkles className="w-5 h-5 text-indigo-600" />
-                <h3 className="font-black text-slate-800 uppercase tracking-tight">AI Content Engine</h3>
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="p-8 bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] space-y-8 relative overflow-hidden backdrop-blur-md"
+          >
+            <div className="space-y-4 relative z-10">
+              <div className={cn(
+                "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-wider",
+                lead.status === 'sent' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+              )}>
+                {lead.status === 'sent' ? <CheckCircle size={12} /> : <Zap size={12} />}
+                {lead.status.replace('_', ' ')}
               </div>
               
+              <h2 className="text-4xl font-bold text-white tracking-tight leading-tight">{lead.name}</h2>
+              <p className="text-zinc-500 font-medium">{lead.industry}</p>
+            </div>
+
+            <div className="space-y-4 pt-6 border-t border-zinc-800 relative z-10">
+              <ContactItem icon={<Globe />} value={lead.website} href={lead.website} isLink />
+              <ContactItem icon={<Mail />} value={lead.email} />
+              <ContactItem icon={<Phone />} value={lead.phone} />
+            </div>
+
+            <div className="pt-6 relative z-10">
+              <button 
+                onClick={handleGenerateWebsite}
+                disabled={generatingWebsite}
+                className="w-full py-4 bg-zinc-950 border border-zinc-800 hover:border-indigo-500/50 rounded-2xl flex items-center justify-center gap-3 text-sm font-bold text-white transition-all group"
+              >
+                {generatingWebsite ? (
+                  <Loader2 className="animate-spin text-indigo-500" size={18} />
+                ) : (
+                  <Rocket className="text-indigo-500 group-hover:scale-110 transition-transform" size={18} />
+                )}
+                {generatingWebsite ? 'Building Funnel...' : 'Launch AI WhatsApp Funnel'}
+              </button>
+            </div>
+
+            <div className="p-6 bg-zinc-800/30 rounded-3xl border border-zinc-700/50 space-y-4 relative z-10">
+              <div className="flex justify-between items-center">
+                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Intelligence Score</span>
+                 <span className="text-xl font-bold text-indigo-400">{lead.score}%</span>
+              </div>
+              <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden">
+                 <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${lead.score}%` }}
+                    className="h-full bg-indigo-500"
+                 />
+              </div>
+            </div>
+            
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl" />
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="p-8 bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] relative overflow-hidden"
+          >
+            <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-4 flex items-center gap-2">
+              <Cpu size={16} className="text-indigo-500" />
+              AI Analyst Notes
+            </h3>
+            <p className="text-sm text-zinc-400 leading-relaxed font-medium">
+              {lead.notes || "No analyst notes available for this lead profile. AI scanning is currently active."}
+            </p>
+          </motion.div>
+        </div>
+
+        {/* Right Column: AI Workspace */}
+        <div className="lg:col-span-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="h-full flex flex-col bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/20"
+          >
+            {/* Workspace Header */}
+            <div className="p-6 bg-zinc-900/50 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-6">
               <div className="flex items-center gap-3">
-                <select value={tone} onChange={(e) => setTone(e.target.value)} className="bg-white border-slate-200 rounded-xl text-xs font-bold py-2">
+                <div className="p-2.5 bg-indigo-600 rounded-xl text-white">
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-widest">Sales Sequence Generator</h3>
+                  <p className="text-[10px] text-zinc-500 font-bold uppercase">Optimized for Conversion</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <select 
+                  value={tone} 
+                  onChange={(e) => setTone(e.target.value)} 
+                  className="bg-zinc-800 border-none rounded-xl text-xs font-bold text-zinc-300 py-2.5 px-4 focus:ring-0 cursor-pointer"
+                >
                   <option value="friendly">Friendly</option>
                   <option value="persuasive">Persuasive</option>
                   <option value="formal">Formal</option>
+                  <option value="luxury">Luxury Elite</option>
+                  <option value="aggressive">Aggressive Hustle</option>
                 </select>
-                <select value={serviceFocus} onChange={(e) => setServiceFocus(e.target.value)} className="bg-white border-slate-200 rounded-xl text-xs font-bold py-2">
-                  <option value="WhatsApp Automation">WhatsApp Automation</option>
-                  <option value="AI Reply System">AI Reply System</option>
-                  <option value="Website Development">Website Development</option>
+                <select 
+                  value={serviceFocus} 
+                  onChange={(e) => setServiceFocus(e.target.value)} 
+                  className="bg-zinc-800 border-none rounded-xl text-xs font-bold text-zinc-300 py-2.5 px-4 focus:ring-0 cursor-pointer"
+                >
+                  <option value="WhatsApp Automation Bots">WhatsApp Bots</option>
+                  <option value="AI Customer Reply Systems">AI Replies</option>
+                  <option value="Website Development">Websites</option>
                 </select>
-                <button onClick={handleGenerate} disabled={generating} className="btn-primary py-2 px-4 text-xs">
-                  {generating ? 'Drafting...' : 'Re-Generate'}
+                <button 
+                  onClick={handleGenerate} 
+                  disabled={generating} 
+                  className="px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50"
+                >
+                  {generating ? 'Drafting...' : 'Re-Draft AI'}
                 </button>
               </div>
             </div>
 
-            <div className="p-8 flex-1 space-y-6">
-              {generatedMessage.subject || generatedMessage.body ? (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Subject</label>
-                    <input value={generatedMessage.subject} onChange={(e) => setGeneratedMessage({...generatedMessage, subject: e.target.value})} className="w-full text-xl font-bold border-none bg-slate-50 rounded-xl focus:ring-2 focus:ring-indigo-500 p-4" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Personalized Pitch</label>
-                    <textarea rows="10" value={generatedMessage.body} onChange={(e) => setGeneratedMessage({...generatedMessage, body: e.target.value})} className="w-full text-slate-700 leading-relaxed border-none bg-slate-50 rounded-2xl focus:ring-2 focus:ring-indigo-500 p-6 font-medium" />
-                  </div>
-                  <button onClick={handleSend} disabled={sending || !lead.email} className="w-full btn-primary py-4 text-lg">
-                    {sending ? 'Transmitting...' : lead.email ? 'Send via Resend API' : 'No Email Found'}
-                  </button>
-                </div>
-              ) : (
-                <div className="py-24 text-center space-y-6 border-2 border-dashed border-slate-100 rounded-3xl">
-                   <Zap className="w-12 h-12 text-slate-200 mx-auto" />
-                   <div>
-                     <p className="text-slate-400 font-bold italic">AI Draft Ready for {lead.name}</p>
-                     <button onClick={handleGenerate} disabled={generating} className="btn-primary mt-6 mx-auto px-10">
-                       Launch AI Generator
-                     </button>
-                   </div>
-                </div>
-              )}
+            {/* Workspace Content */}
+            <div className="flex-1 p-8 overflow-y-auto min-h-[500px]">
+              <AnimatePresence mode="wait">
+                {generatedMessage.body ? (
+                  <motion.div 
+                    key="editor"
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="space-y-6"
+                  >
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Email Subject Line</label>
+                      <input 
+                        value={generatedMessage.subject} 
+                        onChange={(e) => setGeneratedMessage({...generatedMessage, subject: e.target.value})} 
+                        className="w-full text-xl font-bold bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Personalized Pitch</label>
+                      <textarea 
+                        rows="12" 
+                        value={generatedMessage.body} 
+                        onChange={(e) => setGeneratedMessage({...generatedMessage, body: e.target.value})} 
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-6 text-zinc-300 font-medium leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none"
+                      />
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    key="placeholder"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="h-full flex flex-col items-center justify-center text-center space-y-6 py-20"
+                  >
+                    <div className="w-20 h-20 bg-zinc-950 border border-zinc-800 rounded-[2rem] flex items-center justify-center text-zinc-700">
+                      <MessageSquare size={32} />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-bold text-white tracking-tight">AI Sequence Standby</h3>
+                      <p className="text-zinc-500 max-w-sm font-medium mx-auto italic">Your personalized sales pitch is ready to be synthesized by the intelligence engine.</p>
+                    </div>
+                    <button 
+                      onClick={handleGenerate} 
+                      disabled={generating} 
+                      className="px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[2rem] font-bold transition-all shadow-xl shadow-indigo-600/20 active:scale-95 flex items-center gap-3"
+                    >
+                      {generating ? <Loader2 className="animate-spin" size={20} /> : <Zap size={20} />}
+                      {generating ? 'Drafting Sequence...' : 'Initialize AI Generator'}
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          </div>
+
+            {/* Workspace Actions */}
+            {generatedMessage.body && (
+              <div className="p-8 pt-0">
+                <button 
+                  onClick={handleSend} 
+                  disabled={sending || (!mockMode && !lead.email)} 
+                  className="w-full py-5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 text-white rounded-[2rem] font-bold text-lg transition-all shadow-2xl shadow-indigo-600/20 flex items-center justify-center gap-3"
+                >
+                  {sending ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <>
+                      <Send size={20} />
+                      {lead.email ? 'Transmit via Resend API' : 'No Target Email Found'}
+                    </>
+                  )}
+                </button>
+                <p className="text-center mt-4 text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Enterprise Outreach Active</p>
+              </div>
+            )}
+          </motion.div>
         </div>
       </div>
     </div>
   );
 };
+
+const ContactItem = ({ icon, value, href, isLink }) => (
+  <div className="flex items-center gap-4 group">
+    <div className="w-10 h-10 bg-zinc-800 rounded-xl flex items-center justify-center text-zinc-500 border border-zinc-700 transition-colors group-hover:text-indigo-400 group-hover:border-indigo-500/30">
+      {React.cloneElement(icon, { size: 18 })}
+    </div>
+    <div className="flex-1 min-w-0">
+      {isLink ? (
+        <a 
+          href={href} 
+          target="_blank" 
+          rel="noreferrer" 
+          className="text-sm font-bold text-zinc-400 hover:text-indigo-400 transition-colors flex items-center gap-1.5 truncate underline decoration-zinc-800 underline-offset-4"
+        >
+          {value || 'Not listed'}
+          <ExternalLink size={12} />
+        </a>
+      ) : (
+        <span className="text-sm font-bold text-zinc-400 truncate block">
+          {value || <span className="text-amber-500/50 italic font-medium">Pending acquisition...</span>}
+        </span>
+      )}
+    </div>
+  </div>
+);
 
 export default LeadDetail;

@@ -1,0 +1,366 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. Agency / White-label Sub-accounts
+model Account {
+  id            String   @id @default(cuid())
+  name          String
+  domain        String?  @unique
+  logoUrl       String?
+  brandingColor String?  @default("#4f46e5")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  leads          Lead[]
+  receptionists  AIReceptionist[]
+  websites       Website[]
+  automations    Automation[]
+  users          User[]
+  socialPosts    SocialPost[]
+  seoAudits      SEOAudit[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      UserRole @default(EMPLOYEE)
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+enum UserRole {
+  ADMIN
+  EMPLOYEE
+}
+
+// 2. Leads Discovery Engine
+model Lead {
+  id               String      @id @default(cuid())
+  name             String
+  industry         String?
+  website          String?
+  email            String?
+  phone            String?
+  instagram        String?
+  facebook         String?
+  whatsapp         String?
+  googlePlaceId    String?     @unique
+  rating           Float?
+  reviewCount      Int?        @default(0)
+  priceLevel       Int?
+  reservable       Boolean?    @default(false)
+  address          String?
+  city             String?
+  country          String?
+  
+  // Qualification & Scoring (Operation Black Forge)
+  automationNeedScore Int      @default(0)
+  industryTier        Int      @default(3) // 1, 2, or 3
+  opportunityScore    Int      @default(0) // Final Rank
+  revenuePotential    Revenue  @default(LOW)
+  urgency             Urgency  @default(LOW)
+  status              LeadStatus @default(NOT_CONTACTED)
+  
+  // Logical Triggers
+  hasUrgencyMarker    Boolean  @default(false)
+  hasEfficiencyMarker Boolean  @default(false)
+  hasRecoveryMarker   Boolean  @default(false)
+  
+  // Metadata
+  notes            String?
+  accountId        String
+  account          Account     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  outreachLogs     OutreachLog[]
+}
+
+enum Revenue {
+  LOW
+  MEDIUM
+  HIGH
+  ENTERPRISE
+}
+
+enum Urgency {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum LeadStatus {
+  NOT_CONTACTED
+  DISCOVERED
+  QUALIFIED
+  SENT
+  OPENED
+  REPLIED
+  INTERESTED
+  MEETING_BOOKED
+  CONVERTED
+  REJECTED
+}
+
+// 3. Outreach & Sales Engine
+model OutreachLog {
+  id           String          @id @default(cuid())
+  leadId       String
+  lead         Lead            @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  channel      OutreachChannel
+  status       OutreachStatus  @default(PENDING)
+  subject      String?
+  body         String
+  sentAt       DateTime?
+  response     String?
+  respondedAt  DateTime?
+  
+  createdAt    DateTime        @default(now())
+}
+
+enum OutreachChannel {
+  EMAIL
+  WHATSAPP
+  SMS
+  INSTAGRAM_DM
+}
+
+enum OutreachStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  REPLIED
+}
+
+// 4. AI Receptionist System
+model AIReceptionist {
+  id           String   @id @default(cuid())
+  name         String
+  phoneNumber  String?  @unique
+  voiceConfig  Json?    // Stores voice model settings
+  knowledgeBase String? // FAQ content or context
+  isActive     Boolean  @default(true)
+  
+  accountId    String
+  account      Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  callLogs     CallLog[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model CallLog {
+  id               String         @id @default(cuid())
+  receptionistId   String
+  receptionist     AIReceptionist @relation(fields: [receptionistId], references: [id], onDelete: Cascade)
+  fromNumber       String
+  transcript       String?
+  summary          String?
+  recordingUrl     String?
+  duration         Int?           // In seconds
+  status           CallStatus     @default(COMPLETED)
+  
+  // New fields from specs
+  outcome          CallOutcome?
+  bookingType      String?
+  escalationReason String?
+  sentimentScore   Float?         // -1.0 to 1.0
+  
+  createdAt        DateTime       @default(now())
+}
+
+enum CallStatus {
+  IN_PROGRESS
+  COMPLETED
+  MISSED
+  VOICEMAIL
+}
+
+enum CallOutcome {
+  BOOKED
+  INFORMATIONAL
+  ESCALATED
+  ABANDONED
+}
+
+// 5. Website & Funnel Builder
+model Website {
+  id           String   @id @default(cuid())
+  title        String
+  slug         String   @unique
+  templateId   String?
+  content      Json?    // CMS structure
+  status       PubStatus @default(DRAFT)
+  domain       String?  @unique
+  
+  accountId    String
+  account      Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum PubStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// 6. Reputation & Review Manager
+model ReputationCampaign {
+  id           String   @id @default(cuid())
+  name         String
+  platform     String   @default("GOOGLE_BUSINESS")
+  triggerEvent String?  // JSON with rating, text, sentiment, etc.
+
+  reviews      Review[]
+  createdAt    DateTime @default(now())
+}
+
+model Review {
+  id              String   @id @default(cuid())
+  businessId      String
+  platform        String   @default("GOOGLE_BUSINESS") // GOOGLE_BUSINESS, FACEBOOK, YELP, etc.
+  gbpReviewId     String?  // External review ID from platform
+  reviewerName    String?
+  rating          Int      // 1-5 stars
+  text            String?
+
+  // AI Analysis
+  sentimentScore  Int?     // -100 to +100
+  sentimentLabel  String?  // VERY_NEGATIVE, NEGATIVE, NEUTRAL, POSITIVE, VERY_POSITIVE
+
+  // AI Response Draft
+  aiResponseDraft String?
+  responseStatus   String?  // pending, approved, posted, dismissed
+  responsePostedAt DateTime?
+
+  // Customer contact info (for follow-up)
+  customerPhone    String?
+  customerEmail    String?
+  gbpReviewLink    String?
+
+  // Relations
+  campaignId       String?
+  campaign         ReputationCampaign? @relation(fields: [campaignId], references: [id])
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+// 7. Social Media & SEO
+model SocialPost {
+  id               String   @id @default(cuid())
+  businessId       String
+
+  platform         String   // INSTAGRAM, FACEBOOK, LINKEDIN, GOOGLE_BUSINESS, TIKTOK
+  content          String
+  mediaUrl         String?
+
+  status           String   @default("draft") // draft, scheduled, published, failed
+
+  scheduledAt      DateTime?
+  publishedAt      DateTime?
+
+  // Engagement metrics (updated periodically)
+  likesCount       Int      @default(0)
+  commentsCount    Int      @default(0)
+  sharesCount      Int      @default(0)
+  reachCount       Int      @default(0)
+
+  // Reference to review if repurposed
+  sourceReviewId   String?
+
+  accountId        String
+  account          Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model SEOAudit {
+  id                       String   @id @default(cuid())
+  businessId               String
+
+  // GMB Completeness Score (0-100)
+  gmbCompletenessScore     Int      @default(0)
+
+  // NAP Consistency Score (0-100)
+  citationConsistencyScore  Int      @default(0)
+
+  // Local keyword rankings (JSON array of {keyword, position, searchVolume})
+  localKeywordRankings     String?  // JSON
+
+  // Action items (JSON array of {task, priority, status})
+  actionItems              String?  // JSON
+
+  // SEO Health Score (0-100)
+  seoHealthScore           Int      @default(0)
+
+  lastAuditedAt            DateTime @default(now())
+
+  accountId                String
+  account                  Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+}
+
+// 7. Workflow Automation Engine
+model Automation {
+  id           String   @id @default(cuid())
+  name         String
+  trigger      Json     // { type: "lead_status_change", value: "REPLIED" }
+  actions      Json     // Array of steps
+  isActive     Boolean  @default(false)
+  
+  accountId    String
+  account      Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  flowLogs     FlowExecutionLog[]
+}
+
+model FlowExecutionLog {
+  id            String   @id @default(cuid())
+  automationId  String
+  automation    Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  status        ExecutionStatus @default(RUNNING)
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+  errorMessage  String?
+  metadata      Json?
+  
+  createdAt     DateTime @default(now())
+}
+
+enum ExecutionStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// 8. Analytics & KPIs
+model AnalyticsMetric {
+  id        String   @id @default(cuid())
+  key       String   // e.g., "response_rate", "revenue_generated"
+  value     Float
+  timestamp DateTime @default(now())
+  metadata  Json?    // Optional segmentation data (e.g. { industry: "Salon" })
+}
